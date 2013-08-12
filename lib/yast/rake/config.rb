@@ -8,6 +8,8 @@ module Yast
 
       def self.load
         @config ||= Proxy.new
+        @verbose = config.verbose?
+        @trace   = config.trace?
         self
       end
 
@@ -15,12 +17,28 @@ module Yast
         @config
       end
 
+      def self.verbose= verbose
+        @verbose = verbose
+      end
+
+      def self.verbose?
+        @verbose
+      end
+
+      def self.trace= trace
+        @trace = trace
+      end
+
+      def self.trace?
+        @trace
+      end
+
       def self.method_missing name, *args, &block
         super
       rescue => e
-        puts "rake.config does not know '#{name}'"
+        puts "rake does not know about '#{name}'"
         puts e.message
-        puts e.backtrace.first
+        puts e.backtrace if self.trace?
       end
 
       class Proxy
@@ -58,6 +76,14 @@ module Yast
 
         def inspect
           @contexts.keys
+        end
+
+        def verbose?
+          ::Rake.verbose == true
+        end
+
+        def trace?
+          ::Rake.application.options.trace == true
         end
 
         private
@@ -103,14 +129,13 @@ module Yast
           config_module.to_s.split("::").last.downcase.to_sym
         end
 
-      #FIXME decide whether we want catching undefined methods here like this
-      # def method_missing name, *args, &block
-      #   super
-      # rescue => e
-      #   puts "rake.config.#{name} does not know '#{name}'"
-      #   puts "Registered contexts: #{@contexts.keys.join ', '}"
-      #   puts e.backtrace.first
-      # end
+        def method_missing name, *args, &block
+          super
+        rescue => e
+          puts "rake.config does not know about context '#{name}'"
+          puts "Registered contexts: #{@contexts.keys.join ', '}"
+          puts e.backtrace if Config.trace?
+        end
 
         class Context
           attr_reader :rake, :context_name, :errors

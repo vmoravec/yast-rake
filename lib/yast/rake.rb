@@ -6,7 +6,7 @@ module Yast
   module Rake
 
     def rake
-      Config.load
+      @rake ||= Config.load
     end
 
   end
