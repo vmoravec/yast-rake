@@ -68,13 +68,13 @@ You should get a list of all tasks by now, something like this:
       # #check         - checks if there are any errors and prints it to stderr
       # #check!        - does the same as #check but aborts the process in case of errors
 
+      attr_reader :version
+
       def setup
         @version_file = rake.config.root.join(VERSION_FILE)
         errors << "Version file not found" unless File.exists?(@version_file)
-      end
-
-      def version
-        @version ||= File.read(@version_file).strip
+        @version = File.read(@version_file).strip
+        errors << "File #{VERSION_FILE} must not be empty" if @version.size.zero?
       end
 
     end

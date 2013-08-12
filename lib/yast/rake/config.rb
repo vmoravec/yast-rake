@@ -5,8 +5,9 @@ require 'yast/rake/config/package'
 module Yast
   module Rake
     module Config
+
       def self.load
-        @config ||= Proxy.new # is it really a proxy?
+        @config ||= Proxy.new
         self
       end
 
@@ -112,11 +113,11 @@ module Yast
       # end
 
         class Context
-          attr_reader :context_name, :errors
+          attr_reader :rake, :context_name, :errors
 
-          def initialize context_name, config
+          def initialize context_name, rake
+            @rake   = rake
             @errors = []
-            @config = config
             @context_name = context_name
             @config_methods = []
             @errors_reported = false
@@ -143,10 +144,6 @@ module Yast
               end
             end
             @errors_reported = true
-          end
-
-          def rake
-            @config
           end
 
           def check
