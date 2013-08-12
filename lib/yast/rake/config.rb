@@ -1,8 +1,6 @@
 require 'yast/rake/config/base'
 require 'yast/rake/config/yast'
 require 'yast/rake/config/package'
-require 'yast/rake/config/obs'
-require 'yast/rake/config/git'
 
 module Yast
   module Rake

@@ -56,36 +56,37 @@ You should get a list of all tasks by now, something like this:
 #### Examples
 
   ```ruby
-    module Say
-      attr_reader :hello
+    module Yast::Rake::Config
+      module Package
+        VERSION_FILE = 'VERSION'
 
-      def setup
-        @hello = 'hello'
-      end
+        def version
+          File.read(rake.config.root.join(VERSION_FILE)).strip
+        end
 
-      def more *words
-        "Saying #{hello} and #{words.join ', '}"
       end
     end
   ```
-  * in `Rakefile`
+* and in `Rakefile`
 
   ```ruby
     require 'yast/rake'
+    require_relative 'rake/config/package' # rake/ dir in root for all rake stuff
 
-    rake.config.register Say
+    rake.config.register Package
 
-    desc "Just saying"
-    task :say do
-      puts rake.config.say.hello
-      puts rake.config.say.more('goodbye', 'hello')
+    namespace :package do
+      desc "Show package version"
+      task :version do
+        puts rake.config.package.version
+      end
     end
   ```
 
   You can try it out by running `rake console` which starts an IRB session 
   and loads the Rakefile into the main scope.
 
-  For real examples please look at the lib/yast/rake/config/*.rb files.
+  For more real examples please look at the lib/yast/rake/config/*.rb files.
 
 
 ## Todo

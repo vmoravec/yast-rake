@@ -25,14 +25,6 @@ module Yast
           RNC_INSTALL_DIR
         end
 
-        def package_dir
-          rake.config.root.join PACKAGE_DIR
-        end
-
-        def license_dir
-          rake.config.root.join LICENCE_DIR
-        end
-
         def tasks
           Tasks
         end

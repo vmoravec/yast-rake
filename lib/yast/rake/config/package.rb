@@ -133,7 +133,7 @@ module Yast::Rake::Config
 
     def read_content file
       content = File.read(file).strip
-      errors.push("File '#{file}' must not be empty.\nAborting rake..") if content.size.zero?
+      errors.push("File '#{file}' must not be empty.") if content.size.zero?
       content
     end
   end
