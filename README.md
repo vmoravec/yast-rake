@@ -90,9 +90,11 @@ You should get a list of all tasks by now, something like this:
 
 ## Todo
 
+  * add comments for Yard
   * add tests (!!) after the design gets approved
+  * fix spec file
   * add task for building/installing any yast module
-  * identify more useful tasks
+  * identify more useful tasks for obs, git etc.
   * `rake console` does not load the yast code from the git working dir yet
   * loading custom config modules and tasks from specific dir like 
     yast-git-repo/rake/config and yast-git-repo/rake/tasks

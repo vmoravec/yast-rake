@@ -1,15 +1,4 @@
-module Yast::Rake::Options
+module Yast::Rake::Config
   module Obs
-    def obs
-      @obs ||= Options.new
-    end
-
-    class Options
-      def url
-      end
-
-      def target
-      end
-    end
   end
 end

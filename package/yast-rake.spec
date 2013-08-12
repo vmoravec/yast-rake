@@ -1,5 +1,5 @@
 #
-# spec file for package yast-rake-tasks
+# spec file for package yast-rake
 #
 # Copyright (c) 2013 SUSE LINUX Products GmbH, Nuernberg, Germany.
 #
@@ -22,25 +22,25 @@
 #
 ######################################################################
 
-Name:           rubygem-yast-rake-tasks
+Name:           rubygem-yast-rake
 Version:        0.0.1
 Release:        0
 BuildArch:      noarch
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
-Source0:        yast-rake-tasks.tar.bz2
+Source0:        yast-rake.tar.bz2
 
 Requires:       rubygem-rake
 BuildRequires:  rubygem-rake
 
-Summary:        YaST Rake tasks
+Summary:        YaST Rake
 Group:          System/YaST
 License:        GPL-2.0
 
-Url:            https://github.com/yast/yast-rake-tasks
+Url:            https://github.com/yast/yast-rake
 
 %description
-Collection of rake tasks for Yast
+Rake tasks and configuration for YaST
 
 %prep
 %build
@@ -49,11 +49,5 @@ Collection of rake tasks for Yast
 rm -rf "$RPM_BUILD_ROOT"
 
 %files
-%defattr(-,root,root)
-%{_prefix}/share/YaST2/clients/*.rb
-%{_prefix}/share/YaST2/modules/*.rb
-%{_prefix}/share/applications/YaST2/services-manager.desktop
-%{_prefix}/share/YaST2/schema/autoyast/rnc/*.rnc
-
 %changelog
 
