@@ -78,7 +78,7 @@ module Yast
         SETUP_METHOD = :setup
 
         def add_base_config_context context_name, config_module
-          return if context_name == SETUP_METHOD
+          raise "Method '#{SETUP_METHOD}' not allowed in base context" if context_name == SETUP_METHOD
           new_context = Context.new(context_name, self).extend(config_module)
           @contexts[context_name] = new_context
           add_base_context_method(context_name)
@@ -102,6 +102,7 @@ module Yast
           config_module.to_s.split("::").last.downcase.to_sym
         end
 
+      #FIXME decide whether we want catching undefined methods here like this
       # def method_missing name, *args, &block
       #   super
       # rescue => e
@@ -111,7 +112,7 @@ module Yast
       # end
 
         class Context
-          attr_reader :config, :context_name, :errors
+          attr_reader :context_name, :errors
 
           def initialize context_name, config
             @errors = []
@@ -145,7 +146,7 @@ module Yast
           end
 
           def rake
-            config
+            @config
           end
 
           def check

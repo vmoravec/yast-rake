@@ -56,22 +56,36 @@ You should get a list of all tasks by now, something like this:
 #### Examples
 
   ```ruby
-    module Yast::Rake::Config
-      module Package
-        VERSION_FILE = 'VERSION'
+    module Package
+      VERSION_FILE = 'VERSION'
 
-        def version
-          File.read(rake.config.root.join(VERSION_FILE)).strip
-        end
+      # use setup method for initial configuration when calling `rake.config.register`
+      # there are several context methods available when registering the module:
 
+      # #rake          - use if needed to access other configs, e.g. rake.config.yast.install_dir
+      # #errors        - list of errors; collects errors from all config modules
+      # #context_name  - context derived from the configuration ruby module name
+      # #check         - checks if there are any errors and prints it to stderr
+      # #check!        - does the same as #check but aborts the process in case of errors
+
+      def setup
+        @version_file = rake.config.root.join(VERSION_FILE)
+        errors << "Version file not found" unless File.exists?(@version_file)
       end
+
+      def version
+        @version ||= File.read(@version_file).strip
+      end
+
     end
   ```
-* and in `Rakefile`
+
+  and in `Rakefile`
+
 
   ```ruby
     require 'yast/rake'
-    require_relative 'rake/config/package' # rake/ dir in root for all rake stuff
+    require_relative 'rake/config/package'
 
     rake.config.register Package
 
@@ -94,6 +108,7 @@ You should get a list of all tasks by now, something like this:
   * add comments for Yard
   * add tests (!!) after the design gets approved
   * fix spec file
+  * add docs on how to organize the config modules and task in a yast repo
   * add task for building/installing any yast module
   * identify more useful tasks for obs, git etc.
   * `rake console` does not load the yast code from the git working dir yet

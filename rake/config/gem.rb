@@ -1,5 +1,8 @@
 module Yast::Rake::Config
   module Gem
+    NAME    = 'yast-rake'
+    RPMNAME = "rubygem-#{NAME}"
+
     attr_reader :package
 
     def setup
