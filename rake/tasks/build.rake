@@ -9,8 +9,10 @@ namespace :build do
     sh "gem build #{gem_spec}"
     install gem_name, package.dir
     puts "Gem file is available in #{package.dir.join gem_name}"
+    rm gem_name
   end
 
+  #TODO
   desc "Create an rpm package from gem"
   task :package do
     # implement creating the rpm package

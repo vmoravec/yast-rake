@@ -1,32 +1,38 @@
 require 'yast/rake/config/base'
 require 'yast/rake/config/yast'
 require 'yast/rake/config/package'
+require 'forwardable'
 
 module Yast
   module Rake
     module Config
 
-      def self.load
+      class << self
+        extend Forwardable
+
+        def_delegators :@config, :register, :update
+
+        attr_reader :config
+        attr_writer :verbose, :trace
+      end
+
+      def self.load_default_config_modules
         @config ||= Proxy.new
         @verbose = config.verbose?
         @trace   = config.trace?
         self
       end
 
-      def self.config
-        @config
+      def self.load_custom_config_modules
+        config_dir = config.root.join('rake', 'config')
+        Dir.glob("#{config_dir}/*.rb").each {|config_file| require config_file }
       end
 
-      def self.verbose= verbose
-        @verbose = verbose
-      end
-
+      # Why repeat the definition if we could delegate it from @config?
+      # Because we want to change it from console if verbose output is needed.
+      # See the attr_writers above for this purpose
       def self.verbose?
         @verbose
-      end
-
-      def self.trace= trace
-        @trace = trace
       end
 
       def self.trace?
@@ -53,6 +59,7 @@ module Yast
         end
 
         def register config_module, keep_module_name=true
+          puts "Registering config module #{config_module}" if verbose?
           if keep_module_name
             config_name = get_downcased_module_name(config_module)
             remove_config_context(config_name)
@@ -75,7 +82,7 @@ module Yast
         end
 
         def inspect
-          @contexts.keys
+          "[ #{@contexts.keys.join(', ')} ]"
         end
 
         def verbose?
@@ -129,6 +136,10 @@ module Yast
           config_module.to_s.split("::").last.downcase.to_sym
         end
 
+        def to_ary
+          @contexts.keys
+        end
+
         def method_missing name, *args, &block
           super
         rescue => e
@@ -159,13 +170,14 @@ module Yast
           end
 
           def inspect
-            @extended_methods.to_a
+            "[ #{@extended_methods.sort.join(', ')} ]"
           end
 
           def report_errors force_report=false
             if force_report || !@errors_reported
               errors.each do |err_message|
                 STDERR.puts("#{context_name.capitalize}: #{err_message}")
+                set_exit_code_to_one
               end
             end
             @errors_reported = true
@@ -192,11 +204,19 @@ module Yast
             __send__(SETUP_METHOD) if respond_to?(SETUP_METHOD, true)
           end
 
+          def set_exit_code_to_one
+            Kernel.at_exit { exit 1 }
+          end
+
         end
 
       end
-
     end
+
+    # Load the configuration instantly to access the config methods from outside
+    # without needing to load it manually
+    Config.load_default_config_modules
+
   end
 end
 

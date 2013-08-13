@@ -10,12 +10,19 @@ module Yast::Rake::Config
     end
 
     def path
-      package.dir.join package.dir, self.name
+      package.dir.join package.dir, name
     end
 
     def name
-      "#{package.name}-#{package.version}.gem"
+      "#{NAME}-#{package.version}.gem"
+    end
+
+    def rpm_name
+      RPMNAME
     end
   end
+
+  register Gem
+
 end
 

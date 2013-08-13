@@ -98,9 +98,12 @@ You should get a list of all tasks by now, something like this:
   ```
 
   You can try it out by running `rake console` which starts an IRB session 
-  and loads the Rakefile into the main scope.
+  and loads `rake` object into the main scope.
 
   For more real examples please look at the lib/yast/rake/config/*.rb files.
+
+### Config module API
+  TODO
 
 
 ## Todo

@@ -1,29 +1,28 @@
 require 'pathname'
 require 'yast/rake/version'
 require 'yast/rake/config'
+require 'yast/rake/tasks'
 
 module Yast
   module Rake
 
     def rake
-      @rake ||= Config.load
+      @rake ||= Config
     end
 
   end
 end
 
-# extend the main object with rake method to work with it
+# Extend the main object with rake method to work with it
 # directly from the Rakefile
 self.extend Yast::Rake
 
-# needed for the default.rake task to record tasks metadata
-# must be set before loading the tasks
-Rake::TaskManager.record_task_metadata = true
+# Import the default built-in tasks
+Yast::Rake::Tasks.import_default_tasks
 
-require 'yast/rake/tasks'
+# Load custom configuration from path rake/config
+Yast::Rake::Config.load_custom_config_modules
 
-# load all tasks;
-# directories to be scanned for rake tasks
-# default tasks: lib/yast/rake/tasks
-# package tasks: package/dir/rake/tasks
-Yast::Rake::Tasks.import
+# Import the custom tasks if there are any
+# Inspected dirs: [ tasks/, rake/tasks/ ]
+Yast::Rake::Tasks.import_custom_tasks(rake.config.root)
