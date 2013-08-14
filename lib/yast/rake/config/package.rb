@@ -68,7 +68,7 @@ module Yast::Rake::Config
       end
 
       def inspect
-        "[ #{public_methods(false).sort.join ', '} ]"
+        "[ #{(public_methods(false) - [:inspect]).sort.join ', '} ]"
       end
 
       private
@@ -78,10 +78,32 @@ module Yast::Rake::Config
       end
     end
 
-    attr_reader   :version, :name, :maintainer, :files
+    class Dirs
+      def initialize rake
+        @rake = rake
+      end
+
+      def src
+        root_dir.join SRC_DIR
+      end
+
+      def inspect
+        "[ #{(public_methods(false) - [:inspect]).sort.join ', '} ]"
+      end
+
+      private
+
+      def root_dir
+        @rake.config.root
+      end
+    end
+
+
+    attr_reader   :version, :name, :maintainer, :files, :dirs
     attr_accessor :domain
 
     def setup
+      @dirs      = Dirs.new(rake)
       @domain    = get_domain_from_rpmname
       @mainainer = read_maintainer_file
       @name      = read_rpmname_file
@@ -115,8 +137,7 @@ module Yast::Rake::Config
     end
 
     def read_version_file
-      file_path = rake.config.root.join VERSION_FILE
-      read_file(file_path)
+      read_file(rake.config.root.join VERSION_FILE)
     end
 
     def read_rpmname_file

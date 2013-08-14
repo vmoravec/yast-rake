@@ -9,12 +9,8 @@ namespace :package do
 
   desc "Create a new yast package skeleton"
   task :init do
+    #TODO
     puts "Creating a new package skeleton"
-  end
-
-  desc "Check the package mandatory properties"
-  task :check do
-    rake.config.package.check!
   end
 
 end
