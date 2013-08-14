@@ -211,6 +211,7 @@ module Yast
           end
 
           def set_exit_code_to_one
+            puts "Setting exit code to 1" if rake.verbose?
             Kernel.at_exit { exit 1 }
           end
 
