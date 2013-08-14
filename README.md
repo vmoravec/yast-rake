@@ -55,6 +55,8 @@ You should get a list of all tasks by now, something like this:
 
 #### Examples
 
+  in `rake/config/package.rb`
+
   ```ruby
     module Package
       VERSION_FILE = 'VERSION'
@@ -85,7 +87,14 @@ You should get a list of all tasks by now, something like this:
 
   ```ruby
     require 'yast/rake'
-    require_relative 'rake/config/package'
+
+    # Configuration modules gets loaded from path rake/config/package.rb automatically.
+    # If you store your config module somewhere else, you need to load it manually.
+    # e.g. require_relative 'config/package.rb'
+
+    # If you define the config module in namespace Yast::Rake::Config,
+    # you can register it directly in the file below the module definition and
+    # do not need to put this line into the Rakefile.
 
     rake.config.register Package
 
@@ -100,7 +109,8 @@ You should get a list of all tasks by now, something like this:
   You can try it out by running `rake console` which starts an IRB session 
   and loads `rake` object into the main scope.
 
-  For more real examples please look at the lib/yast/rake/config/*.rb files.
+  For more real examples please look at the lib/yast/rake/config/*.rb files or
+  or at custom configuration modules within this gem in rake/config/ directory.
 
 ### Config module API
   TODO
@@ -108,14 +118,15 @@ You should get a list of all tasks by now, something like this:
 
 ## Todo
 
-  * add comments for Yard
-  * add tests (!!) after the design gets approved
-  * fix spec file
-  * add docs on how to organize the config modules and task in a yast repo
-  * add task for building/installing any yast module
-  * identify more useful tasks for obs, git etc.
+  * Add comments for Yard
+  * Add tests (!!) after the design gets approved
+  * Add some kind of logging based on rake cli options --verbose and --trace
+  * Fix spec file
+  * Add docs on how to organize the config modules and task in a yast repo
+  * Add task for building/installing any yast module
+  * Identify more useful tasks for obs, git etc.
   * `rake console` does not load the yast code from the git working dir yet
-  * loading custom config modules and tasks from specific dir like 
+  * Loading custom config modules and tasks from specific dir like 
     yast-git-repo/rake/config and yast-git-repo/rake/tasks
 
 

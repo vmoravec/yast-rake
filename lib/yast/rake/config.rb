@@ -24,6 +24,7 @@ module Yast
       end
 
       def self.load_custom_config_modules
+        puts "Loading custom config modules.." if verbose?
         config_dir = config.root.join('rake', 'config')
         Dir.glob("#{config_dir}/*.rb").each {|config_file| require config_file }
       end
@@ -66,6 +67,7 @@ module Yast
             add_config_context(config_name, config_module)
           else
             config_module.public_instance_methods.each do |context_name|
+              puts "Registering base config context '#{context_name}'" if verbose?
               remove_config_context(context_name)
               add_base_config_context(context_name, config_module)
             end
@@ -74,10 +76,11 @@ module Yast
 
         def update loaded_module, new_module
           config_name = get_downcased_module_name(loaded_module)
+          puts @contexts.member? config_name
           if @contexts.member?(config_name)
             @contexts[config_name].extend(new_module)
           else
-            add_new_config_context(config_name, new_module)
+            add_config_context(config_name, new_module)
           end
         end
 
@@ -96,10 +99,12 @@ module Yast
         private
 
         def remove_config_context config_name
-          if respond_to? config_name
-            self.class.__send__(remove_method, config_name)
-            @contexts.delete config_name
+          if respond_to?(config_name)
+            singleton_class.__send__(:undef_method, config_name)
+            @contexts.delete(config_name)
           end
+        rescue NameError => e
+          puts e.message
         end
 
         def add_config_context config_name, config_module
@@ -161,8 +166,9 @@ module Yast
 
           def extend config_module
             make_setup_method_private(config_module)
-            @extended_methods = config_module.public_instance_methods
-            @config_methods.concat(@extended_methods)
+            config_module.public_instance_methods.each do |method_name|
+              @config_methods.push(method_name) unless @config_methods.include?(method_name)
+            end
             super           # keep the Object.extend functionality
             run_setup       # call the setup method from config module
             report_errors   # if setup collected errors, show them now
@@ -170,7 +176,7 @@ module Yast
           end
 
           def inspect
-            "[ #{@extended_methods.sort.join(', ')} ]"
+            "[ #{@config_methods.sort.join(', ')} ]"
           end
 
           def report_errors force_report=false
@@ -208,13 +214,13 @@ module Yast
             Kernel.at_exit { exit 1 }
           end
 
-        end
+        end # Context
 
-      end
-    end
+      end # Proxy
+    end # Config
 
     # Load the configuration instantly to access the config methods from outside
-    # without needing to load it manually
+    # without needing to load it manually from somwhere else
     Config.load_default_config_modules
 
   end

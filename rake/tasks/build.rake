@@ -1,15 +1,14 @@
 namespace :build do
 
   package = rake.config.package
+  gem     = rake.config.gem
 
   desc "Create a gem for yast-rake"
   task :gem do
-    gem_spec = 'yast-rake.gemspec'
-    gem_name = "#{package.name}-#{package.version}.gem"
-    sh "gem build #{gem_spec}"
-    install gem_name, package.dir
-    puts "Gem file is available in #{package.dir.join gem_name}"
-    rm gem_name
+    sh "gem build #{gem.spec}"
+    install gem.name, package.dir
+    puts "Gem file is available in #{package.dir.join gem.name}"
+    rm gem.name
   end
 
   #TODO

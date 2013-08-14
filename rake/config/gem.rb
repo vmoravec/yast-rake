@@ -2,6 +2,7 @@ module Yast::Rake::Config
   module Gem
     NAME    = 'yast-rake'
     RPMNAME = "rubygem-#{NAME}"
+    SPEC    = "#{NAME}.gemspec"
 
     attr_reader :package
 
@@ -19,6 +20,10 @@ module Yast::Rake::Config
 
     def rpm_name
       RPMNAME
+    end
+
+    def spec
+      SPEC
     end
   end
 
