@@ -1,6 +1,7 @@
 require 'yast/rake/config/base'
 require 'yast/rake/config/yast'
 require 'yast/rake/config/package'
+require 'yast/rake/config/console'
 require 'forwardable'
 
 module Yast
@@ -57,6 +58,7 @@ module Yast
           register Base, false
           register Yast
           register Package
+          register Console
         end
 
         def register config_module, keep_module_name=true
@@ -76,7 +78,6 @@ module Yast
 
         def update loaded_module, new_module
           config_name = get_downcased_module_name(loaded_module)
-          puts @contexts.member? config_name
           if @contexts.member?(config_name)
             @contexts[config_name].extend(new_module)
           else
