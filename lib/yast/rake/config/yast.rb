@@ -25,9 +25,6 @@ module Yast
           RNC_INSTALL_DIR
         end
 
-        def tasks
-          Tasks
-        end
       end
     end
   end

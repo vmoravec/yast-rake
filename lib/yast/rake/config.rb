@@ -183,7 +183,7 @@ module Yast
             if force_report || !@errors_reported
               errors.each do |err_message|
                 STDERR.puts("#{context_name.capitalize}: #{err_message}")
-                set_exit_code_to_one
+                set_exit_code_to_one unless @exit_code
               end
             end
             @errors_reported = true
@@ -212,7 +212,8 @@ module Yast
 
           def set_exit_code_to_one
             puts "Setting exit code to 1" if rake.verbose?
-            Kernel.at_exit { exit 1 }
+            @exit_code = 1
+            Kernel.at_exit { exit @exit_code }
           end
 
         end # Context
