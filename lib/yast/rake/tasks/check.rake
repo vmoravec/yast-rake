@@ -1,6 +1,5 @@
 namespace :check do
 
-  desc "Default task for rake:check"
   task :all do
     Rake::Task['check:package'].invoke
     Rake::Task['check:syntax'].invoke
@@ -31,4 +30,5 @@ namespace :check do
 
 end
 
+desc "Run all check tasks"
 task :check => 'check:all'
