@@ -3,6 +3,7 @@ require 'yast/rake/config/yast'
 require 'yast/rake/config/package'
 require 'yast/rake/config/console'
 require 'forwardable'
+require 'pathname'
 
 module Yast
   module Rake
@@ -13,32 +14,23 @@ module Yast
 
         def_delegators :@config, :register, :update
 
-        attr_reader :config
-        attr_writer :verbose, :trace
+        attr_reader   :config
+        attr_accessor :verbose, :trace
       end
 
       def self.load_default_config_modules
-        @config ||= Proxy.new
-        @verbose = config.verbose?
-        @trace   = config.trace?
+        @config  = Proxy.new
+        @verbose = config.verbose
+        @trace   = config.trace
         self
       end
 
+      RAKE_CONFIG_DIR = File.join('rake', 'config')
+
       def self.load_custom_config_modules
-        puts "Loading custom config modules.." if verbose?
-        config_dir = config.root.join('rake', 'config')
+        puts "Loading custom config modules.." if verbose
+        config_dir = config.root.join RAKE_CONFIG_DIR
         Dir.glob("#{config_dir}/*.rb").each {|config_file| require config_file }
-      end
-
-      # Why repeat the definition if we could delegate it from @config?
-      # Because we want to change it from console if verbose output is needed.
-      # See the attr_writers above for this purpose
-      def self.verbose?
-        @verbose
-      end
-
-      def self.trace?
-        @trace
       end
 
       def self.method_missing name, *args, &block
@@ -46,13 +38,14 @@ module Yast
       rescue => e
         puts "rake does not know about '#{name}'"
         puts e.message
-        puts e.backtrace if self.trace?
+        puts e.backtrace if self.trace
       end
 
       class Proxy
         attr_reader :config
 
         def initialize
+          puts "\nSetting up the configuration..." if verbose
           @config = self
           @contexts = Hash.new
           register Base, false
@@ -62,14 +55,14 @@ module Yast
         end
 
         def register config_module, keep_module_name=true
-          puts "Registering config module #{config_module}" if verbose?
+          puts "Registering config module #{config_module}" if verbose
           if keep_module_name
             config_name = get_downcased_module_name(config_module)
             remove_config_context(config_name)
             add_config_context(config_name, config_module)
           else
             config_module.public_instance_methods.each do |context_name|
-              puts "Registering base config context '#{context_name}'" if verbose?
+              puts "Registering base config context '#{context_name}'" if verbose
               remove_config_context(context_name)
               add_base_config_context(context_name, config_module)
             end
@@ -89,12 +82,12 @@ module Yast
           "[ #{@contexts.keys.join(', ')} ]"
         end
 
-        def verbose?
-          ::Rake.verbose == true
+        def verbose
+          defined?(::Rake) ? ::Rake.verbose == true : false
         end
 
-        def trace?
-          ::Rake.application.options.trace == true
+        def trace
+          defined?(::Rake) ? ::Rake.application.options.trace == true : false
         end
 
         private
@@ -139,7 +132,10 @@ module Yast
         end
 
         def get_downcased_module_name config_module
-          config_module.to_s.split("::").last.downcase.to_sym
+          config_module.to_s
+          .split("::").last
+          .split(/(?=[A-Z])/)
+          .map(&:downcase).join('_').to_sym
         end
 
         def to_ary
@@ -151,7 +147,7 @@ module Yast
         rescue => e
           puts "rake.config does not know about context '#{name}'"
           puts "Registered contexts: #{@contexts.keys.join ', '}"
-          puts e.backtrace if Config.trace?
+          puts e.backtrace if Config.trace
         end
 
         class Context
@@ -212,20 +208,14 @@ module Yast
           end
 
           def set_exit_code_to_one
-            puts "Setting exit code to 1" if rake.verbose?
+            puts "Setting exit code to 1" if rake.verbose
             @exit_code = 1
             Kernel.at_exit { exit @exit_code }
           end
 
         end # Context
-
       end # Proxy
     end # Config
-
-    # Load the configuration instantly to access the config methods from outside
-    # without needing to load it manually from somwhere else
-    Config.load_default_config_modules
-
-  end
-end
+  end # Rake
+end # Yast
 

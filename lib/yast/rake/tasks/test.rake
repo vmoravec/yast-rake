@@ -12,7 +12,7 @@ task :test do
       next
     end
 
-    puts "Found helper file #{test_helper_file}" if rake.verbose?
+    puts "Found helper file #{test_helper_file}" if rake.verbose
 
     unless test_helper_file
       abort \
@@ -21,13 +21,13 @@ task :test do
         "This task expects you to put `require 'minitest/autorun` into the helper file."
     end
 
-    puts "Loading helper file #{test_helper_file}" if rake.verbose?
+    puts "Loading helper file #{test_helper_file}" if rake.verbose
     require test_helper_file
 
-    puts "Extending load path by #{test_dir}" if rake.verbose?
+    puts "Extending load path by #{test_dir}" if rake.verbose
     $LOAD_PATH.unshift test_dir
 
-    puts "Loading all test files from #{test_dir}" if rake.verbose?
+    puts "Loading all test files from #{test_dir}" if rake.verbose
 
     # Test files shouldn't be expected to load in any specific order.
     # When still in doubt look here:

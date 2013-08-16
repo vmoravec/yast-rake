@@ -7,7 +7,7 @@ task :console do
 
   # By default the proc is an empty block;
   # Use it if you want to execute some code before getting the irb session active;
-  # Typical use case is loading some specific code to avoid repeating writing ;)
+  # Typical use case is loading some specific code to avoid repeated writing ;)
   rake.config.console.proc.call
 
   IRB.start

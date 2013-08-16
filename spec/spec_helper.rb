@@ -1,6 +1,8 @@
 require 'minitest/autorun'
 require 'minitest/spec'
-require 'yast'
+
+lib_dir = File.expand_path('../../lib', __FILE__)
+$LOAD_PATH.unshift(lib_dir) unless $LOAD_PATH.include?(lib_dir)
 
 # Use `require_relative "spec_helper"` on top of your spec files to be able to
 # run them separately with command `ruby spec/some_spec.rb`
