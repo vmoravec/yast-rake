@@ -2,56 +2,50 @@ require 'yast/rake/config/base'
 require 'yast/rake/config/yast'
 require 'yast/rake/config/package'
 require 'yast/rake/config/console'
-require 'forwardable'
 require 'pathname'
 
 module Yast
   module Rake
+
+    module Extension
+      def register ; end
+      def update ;  end
+    end
+
     module Config
 
-      class << self
-        extend Forwardable
 
-        def_delegators :@config, :register, :update
-
-        attr_reader   :config
-        attr_accessor :verbose, :trace
+      def self.extended(object)
+        object.extend Yast::Rake unless object.respond_to?(:rake)
+        object.rake.extend self unless object.rake.respond_to?(:config)
       end
 
-      def self.load_default_config_modules
-        @config  = Proxy.new
-        @verbose = config.verbose
-        @trace   = config.trace
-        self
+      attr_accessor :verbose, :trace
+
+      def config
+        return @config if @config
+        @config.extend
+        @config ||= ConfigProxy.new
+        @verbose = @config.verbose
+        @trace   = @config.trace
+        @config
       end
 
       RAKE_CONFIG_DIR = File.join('rake', 'config')
 
-      def self.load_custom_config_modules
-        puts "Loading custom config modules.." if verbose
-        config_dir = config.root.join RAKE_CONFIG_DIR
-        Dir.glob("#{config_dir}/*.rb").each {|config_file| require config_file }
-      end
 
-      def self.method_missing name, *args, &block
-        super
-      rescue => e
-        puts "rake does not know about '#{name}'"
-        puts e.message
-        puts e.backtrace if self.trace
-      end
-
-      class Proxy
+      class ConfigProxy
         attr_reader :config
+
+        include Rake::Extension
 
         def initialize
           puts "\nSetting up the configuration..." if verbose
-          @config = self
           @contexts = Hash.new
-          register Base, false
-          register Yast
-          register Package
-          register Console
+          register Config::Base, false
+          register Config::Yast
+          register Config::Package
+          register Config::Console
         end
 
         def register config_module, keep_module_name=true
@@ -91,6 +85,12 @@ module Yast
         end
 
         private
+
+        def load_custom_config_modules
+          puts "Loading custom config modules.." if verbose
+          config_dir = config.root.join RAKE_CONFIG_DIR
+          Dir.glob("#{config_dir}/*.rb").each {|config_file| require config_file }
+        end
 
         def remove_config_context config_name
           if respond_to?(config_name)

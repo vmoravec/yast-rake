@@ -7,22 +7,33 @@ module Yast
   module Rake
 
     def rake
-      Yast::Rake::Config
+      self
+    end
+
+    # Remove the method main#rake if it exists.
+    # You should require 'yast/rake' only if you need to work with ruby Rake, like in a Rakefile
+    # Practicaly it means that 'yast/rake/test' is adaptive while 'yast/rake' not and
+    def self.extended(main)
+      main.singleton_class.__send__(:remove_method, :rake) if self.respond_to?(:rake)
     end
 
   end
 end
 
-# Remove the method main#rake if it exists.
-# The theory behind removing it is following:
-# require 'yast/rake' should remove `rake` method from the main scope in case
-# it was defined before by yast/rake/test.
-# Practicaly it means that 'yast/rake/test' is adaptive while 'yast/rake' not and
-self.singleton_class.__send__(:remove_method, :rake) if self.respond_to?(:rake)
-
-# Extend the main object with rake method to work with it
-# directly from the Rakefile
+# Extend the main object with rake to to get rake object to main in Rakefile
 self.extend Yast::Rake
+
+# Add rake.config
+# create a callback in Config.self_extended and check the remote self for some stuff
+rake.extend Yast::Rake::Config # => check whether rake in main is defined and if not
+                               # => create it on some object, either main or any ohter object
+# Adda rake.command
+rake.extend Yast::Rake::Command
+# rake.config.load_defaults
+# rake.command.load_defaults
+# rake.config.load_custom_modules
+# rake.tasks.load_defaults
+# rake.tasks.load_tasks
 
 # Load the default configuration
 Yast::Rake::Config.load_default_config_modules
