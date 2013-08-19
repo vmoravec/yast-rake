@@ -3,13 +3,12 @@ require 'yast/rake/config/yast'
 require 'yast/rake/config/package'
 require 'yast/rake/config/console'
 require 'yast/rake/context'
-require 'pathname'
 
 module Yast
   module Rake
     module Config
 
-      LOCAL_RAKE_CONFIG_DIR = File.join('rake', 'config')
+      LOCAL_CONFIG_DIR = File.join('rake', 'config')
 
       extend Context
 
@@ -27,8 +26,15 @@ module Yast
       end
 
       def self.load_custom_modules
-        config_dir = Config.context[:config].root.join(LOCAL_RAKE_CONFIG_DIR)
-        Dir.glob("#{config_dir}/*.rb").each {|config_file| require config_file }
+        Dir.glob("#{config.root.join(LOCAL_CONFIG_DIR)}/*.rb").each do |config_file|
+          require config_file
+        end
+      end
+
+      private
+
+      def self.config
+        Config.context.config
       end
 
     end

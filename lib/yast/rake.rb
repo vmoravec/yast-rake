@@ -28,18 +28,19 @@ rake.extend Yast::Rake::Config
 
 # Add rake.command
 rake.extend Yast::Rake::Command
-__END__
+puts rake
+puts rake.config
+puts rake.command
+puts "GOING TO LOAD customs"
+#
 # Load the default configuration
-Yast::Rake::Config.load_default_config_modules
+Yast::Rake::Config.load_custom_modules
+Yast::Rake::Command.load_custom_modules
 
 # Import the default built-in tasks
 # Custom tasks will be loaded after the custom config modules are loaded
 Yast::Rake::Tasks.import_default_tasks
 
-# Load custom configuration from path rake/config
-# When you are looking where the default modules are being loaded
-# then look at the bottom of yast/rake/config
-Yast::Rake::Config.load_custom_config_modules
 
 # Import the custom tasks if there are any
 # Inspected dirs: [ tasks/, rake/tasks/ ]

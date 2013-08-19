@@ -2,9 +2,17 @@ module Yast
   module Rake
     module Context
 
+      CustomHash = Class.new(Hash) do
+        def inspect
+          "[ #{keys.join(', ')} ]"
+        end
+      end
+
       def self.extended(mod)
+        puts mod.context
         mod.module_name = parse_module_name(mod)
-        mod.context[mod.module_name] = {}
+        mod.context[mod.module_name] = CustomHash.new
+        puts "DEFINING singleton method #{mod.module_name} on #{mod.context}"
         mod.context.define_singleton_method(mod.module_name) do
           mod.context[mod.module_name]
         end
@@ -22,8 +30,8 @@ module Yast
           context.remove(module_name, context_name)
           context.add(module_name, mod, context_name)
         else
-          context.remove_base(module_name, mod, context_name)
-          context.add_base(module_name, mod, context_name)
+          context.remove_base(module_name, mod)
+          context.add_base(module_name, mod)
         end
       end
 
@@ -47,12 +55,11 @@ module Yast
 
       class ContextManager
         attr_reader   :rake
-        attr_accessor :name
         attr_reader   :context
 
         def initialize
-          @context = Hash.new
-          @rake = self
+          @context = CustomHash.new
+          @rake = context
         end
 
         def [](context_name)
@@ -64,9 +71,7 @@ module Yast
         end
 
         def add module_name, mod, context_name
-          context[module_name].update(
-            context_name => ContextProxy.new(context_name, self).extend(mod)
-          )
+          context[module_name][context_name] = ContextProxy.new(context_name, self).extend(mod)
           context[module_name].define_singleton_method(context_name) { self[context_name] }
         end
 
@@ -77,18 +82,19 @@ module Yast
           end
         end
 
-        def add_base module_name, mod, context_name
-          context[module_name].update(
-            context_name => ContextProxy.new(context_name, self).extend(mod)
-          )
+        def add_base module_name, mod
           context[module_name].extend(mod)
+          mod.public_instance_methods.each do |context_name|
+            context[module_name][context_name] = nil
+          end
         end
 
-        def remove_base module_name, mod, context_name
+        def remove_base module_name, mod
           mod.public_instance_methods.each do |context_method|
             if context[module_name].respond_to?(context_method)
-              context[module_name].singleton_class.send(:undef_method, context_method)
-              context[module_name].delete(context_name)
+              #FIXME this blocks extending of base modules in method add_base
+              #context[module_name].singleton_class.send(:undef_method, context_method)
+              context[module_name].delete(context_method)
             end
           end
         end

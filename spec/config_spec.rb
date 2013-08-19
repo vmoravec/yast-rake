@@ -4,49 +4,68 @@ require 'yast/rake/config'
 
 class TestRake
   def initialize
-    extend Yast::Rake::Config
+    self.extend Yast::Rake::Config
   end
 end
 
-puts TestRake.new.config.root
 
+describe Yast::Rake::Config do
+  attr_reader :rake
 
-describe 'rake.config' do
   before do
     @rake = TestRake.new
   end
 
-  after do
-    @rake = nil
-  end
-
   it "allows access to default configuration modules" do
-    #@rake.config.must_respond_to :root
-    puts @rake.config.respond_to?(:root)
-    @rake.config.must_respond_to :yast
-    @rake.config.must_respond_to :package
-    @rake.config.must_respond_to :console
+    rake.config.must_respond_to :root
+    rake.config.must_respond_to :yast
+    rake.config.must_respond_to :package
+    rake.config.must_respond_to :console
   end
 
-  it "can extend rake.config by other ruby modules" do
-    @rake.config.wont_respond_to :test_config
+  it "allows extending the config by ruby module" do
+    module MyCoolConfig
+      PATH = 'crazy>path>>>'
+      def path
+        PATH
+      end
+    end
 
-      module TestConfig
-        NAME = 'crazy>path>>>'
-        def name
-          NAME
+    Yast::Rake::Config.register MyCoolConfig
+    rake.config.must_respond_to :my_cool_config
+    rake.config.my_cool_config.must_respond_to :path
+    rake.config.my_cool_config.path.must_equal MyCoolConfig::PATH
+  end
+
+  it "allows extending the config without the module namespace" do
+    module YourBaseConfig
+      VERSION = '30.3.0'
+      def version
+        VERSION
+      end
+    end
+
+    Yast::Rake::Config.register YourBaseConfig, false
+    rake.config.must_respond_to :version
+    rake.config.wont_respond_to :your_base_config
+    rake.config.version.must_equal YourBaseConfig::VERSION
+  end
+
+  it "should be able to namespace the module and register it there" do
+    module Yast::Rake::Config
+      module AnythingNeeded
+        def hex
+          0x0045
         end
       end
+      register AnythingNeeded
+    end
 
-    Yast::Rake::Config.register TestConfig
-    @rake.config.must_respond_to :test_config
-    @rake.config.test_config.must_respond_to :name
-    @rake.config.test_config.name.must_equal TestConfig::NAME
+    rake.config.must_respond_to :anything_needed
+    rake.config.anything_needed.must_respond_to :hex
+    rake.config.anything_needed.hex.must_equal 0x0045
   end
 
-  it "can update the rake.config with ruby module" do
-    @rake.config.wont_respond_to :test_config
-  end
 end
 
 
