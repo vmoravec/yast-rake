@@ -9,13 +9,15 @@ module Yast
       end
 
       def self.extended(mod)
-        puts mod.context
         mod.module_name = parse_module_name(mod)
         mod.context[mod.module_name] = CustomHash.new
-        puts "DEFINING singleton method #{mod.module_name} on #{mod.context}"
         mod.context.define_singleton_method(mod.module_name) do
           mod.context[mod.module_name]
         end
+      end
+
+      def self.context
+        @context ||= ContextManager.new
       end
 
       attr_accessor :module_name
@@ -36,11 +38,11 @@ module Yast
       end
 
       def context
-        @context ||= ContextManager.new
+        Context.context
       end
 
       def get_module_context
-        @context[module_name]
+        context[module_name]
       end
 
       def parse_module_name mod

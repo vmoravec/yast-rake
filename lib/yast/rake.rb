@@ -28,10 +28,6 @@ rake.extend Yast::Rake::Config
 
 # Add rake.command
 rake.extend Yast::Rake::Command
-puts rake
-puts rake.config
-puts rake.command
-puts "GOING TO LOAD customs"
 #
 # Load the default configuration
 Yast::Rake::Config.load_custom_modules
