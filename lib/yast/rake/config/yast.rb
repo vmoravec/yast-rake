@@ -20,11 +20,6 @@ module Yast
         def doc_dir
           DOC_DIR
         end
-
-        def rnc_install_dir
-          RNC_INSTALL_DIR
-        end
-
       end
     end
   end

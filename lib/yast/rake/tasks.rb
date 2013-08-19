@@ -22,7 +22,7 @@ module Yast
 
       # needed for the default.rake task to record tasks metadata
       # must be set before loading the tasks
-      ::Rake::TaskManager.record_task_metadata = true
+     #::Rake::TaskManager.record_task_metadata = true
 
     end
   end
