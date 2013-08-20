@@ -1,7 +1,5 @@
 require_relative 'spec_helper'
 
-require 'yast/rake/config'
-
 class TestRake
   def initialize
     self.extend Yast::Rake::Config

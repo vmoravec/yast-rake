@@ -133,7 +133,7 @@ module Yast
 
           def extend mod
             make_setup_method_private(mod)
-            mod.public_instance_methods.each do |method_name|
+            mod.public_instance_methods(false).each do |method_name|
               @context_methods.push(method_name) unless @context_methods.include?(method_name)
             end
             super           # keep the Object.extend functionality

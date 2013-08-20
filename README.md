@@ -1,133 +1,201 @@
 # Yast::Rake
 
-Collection of common useful Rake tasks and configuration extension
+Rake extension for yast with tasks, configs and commands
 
 ## Installation
 
 This code is not available as a rpm package nor a ruby gem yet, below
-you find more details on how to try it out from within a git repo.
+you find more details on how to install it from this git repo.
 
 1. `git clone git@github.com:yast/yast-rake.git`
 2. `cd yast-rake`
-3. `rake install` or `sudo rake install`
-  * please use sudo if you are using system ruby installation;
-    for e.g. ruby version manager (RVM) sudo is not used
-  * this should install the `yast-rake` gem with dependencies (currently `rake` only)
+3. `rake gem:install` or `sudo rake gem:install`
+  * use sudo if you are using system ruby installation;
 
 ## Usage
 
-1. `cd some/yast/git/repository/root`
-2. `touch Rakefile`
-3. `echo 'require "yast/rake"' >> Rakefile`
+1. `cd some/yast/git/repository`
+2. `echo "require 'yast/rake'" > Rakefile`
 4. `rake`
 
-You should get a list of all tasks by now, something like this:
+`rake` is the default task which lists all available tasks:
 
-  >  rake check:all      # Default task for rake:check  
+  >  rake check          # Run all check tasks  
   >  rake check:package  # Check package code completness  
   >  rake check:syntax   # Check syntax of *.{rb,rake} files  
   >  rake console        # Start irb session with yast/rake loaded  
-  >  rake default        # Default task for rake  
   >  rake install        # Install the yast code on the current system  
-  >  rake package:check  # Check the package mandatory properties  
-  >  rake package:info   # Information about the package  
+  >  rake package:info   # Meta information about the yast package  
   >  rake package:init   # Create a new yast package skeleton  
-  >  rake test           # Run tests  
+  >  rake test           # Run all tests  
 
 
 ## Features
 
-### Tasks
+### Config modules
 
-  * predefined common tasks for all yast modules (more to come)
-  * defining of custom tasks using the configuration module
-
-### Configuration modules
-
-  * shared helper `rake.config` to be used in `Rakefile` and in tasks
-    in top level scope (see Examples)
-  * transparent API for defining configuration module namespace
+  * use for configuration
+  * not dependent on Rake
+  * available with `rake.config` in tasks and commands (see below)
+  * API for defining config modules:
     * ruby module name becomes `rake.config.downcased_module_name`
     * module instance methods available from `rake.config.downcased_module_name.*methods`
     * method `setup` for initializing the configuration
-    * `rake.config.register ModuleName` for new config namespace extending
-    * `rake.config.update :namespace, ModuleName` for updating existing namespace
+    * look at config examples below to get a clearer picture
+  * put your custom config modules into `rake/configs` directory to get them loaded
+
+### Command modules
+
+  * use for rake tasks implementation to better testing and managing
+  * not dependent on Rake
+  * available with `rake.command`
+  * put your custom commands into `rake/commands` directory to get them loaded
+
+### Tasks
+
+  * predefined common tasks for all yast modules (not yet completed, pull requests welcome)
+  * defined with rake syntax
+  * implementation via commands (see examples below)
+  * put yor custom tasks into `rake/tasks/` directory to get them loaded 
+
+### Test it
+
+  If you are going to write test cases for some yast module where there were none before,
+  use the tasks for generating the directory with helper file:
+  * `rake gen:test` creates test/ directory and test/test_helper.rb file from a template
+  * `rake gen:spec` creates spec/ directory and spec/spec_helper.rb file from a template
+
 
 #### Examples
 
-  in `rake/config/package.rb`
+##### Config module
+
+  in `rake/configs/package.rb`
 
   ```ruby
-    module Package
-      VERSION_FILE = 'VERSION'
+    module Yast::Rake::Config
+      module Package
+        VERSION_FILE_NAME = 'VERSION'
+        RPM_FILE_NAME = 'RPMNAME'
 
-      # use setup method for initial configuration when calling `rake.config.register`
-      # there are several context methods available when registering the module:
+        attr_reader :version
+        attr_reader :name
 
-      # #rake          - use if needed to access other configs, e.g. rake.config.yast.install_dir
-      # #errors        - list of errors; collects errors from all config modules
-      # #context_name  - context derived from the configuration ruby module name
-      # #check         - checks if there are any errors and prints it to stderr
-      # #check!        - does the same as #check but aborts the process in case of errors
-
-      attr_reader :version
-
-      def setup
-        @version_file = rake.config.root.join(VERSION_FILE)
-        errors << "Version file not found" unless File.exists?(@version_file)
-        @version = File.read(@version_file).strip
-        errors << "File #{VERSION_FILE} must not be empty" if @version.size.zero?
+        def setup
+          @version_file = rake.config.root.join(VERSION_FILE_NAME)
+          @rpmname_file = rake.config.root.join(RPM_FILE_NAME)
+          fail "Version file not found" unless File.exists?(@version_file)
+          fail "Rpm-name file not found" unless File.exists?(@rpmname_file)
+          @version = File.read(@version_file).strip
+          @name    = File.read(@rpmname_file).strip
+          errors << "File #{VERSION_FILE_NAME} must not be empty" if @version.size.zero?
+          errors << "File #{RPM_FILE_NAME} must not be empty"     if @version.size.zero?
+        end
       end
+
+      register Package
 
     end
   ```
 
-  and in `Rakefile`
+  Config modules get loaded automatically from the path `rake/configs/` after the
+  default configs has been loaded.  
 
+  Defining your custom config in namespace `Yast::Rake::Config` has the advantages of
+  avoiding namespace collision, in place registering right after the config module
+  definition and keeping Rakefile clean from custom code.
+
+
+##### Command module
+
+  in `rake/commands/package.rb`
 
   ```ruby
-    require 'yast/rake'
+    module Yast::Rake::Command
+      module Package
+        include FileUtils # no need to require 'fileutils' as they are already loaded
 
-    # Configuration modules gets loaded from path rake/config/package.rb automatically.
-    # If you store your config module somewhere else, you need to load it manually.
-    # e.g. require_relative 'config/package.rb'
+        def install
+          sh "rpm -i #{rake.config.package.name}-#{rake.config.package.version}.rpm'
+          puts "Package has been install successfully"
+        end
+      end
 
-    # If you define the config module in namespace Yast::Rake::Config,
-    # you can register it directly in the file below the module definition and
-    # do not need to put this line into the Rakefile.
+      register Package
 
-    rake.config.register Package
+    end
+  ```
 
+##### Rake task
+
+  in `rake/tasks/package.rake`
+
+  ```ruby
     namespace :package do
-      desc "Show package version"
-      task :version do
-        puts rake.config.package.version
+      desc "Install the package"
+      task :install do
+        rake.command.package.install
       end
     end
   ```
 
-  You can try it out by running `rake console` which starts an IRB session 
-  and loads `rake` object into the main scope.
+  Running `rake package:install` will execute the task/command.
 
-  For more real examples please look at the lib/yast/rake/config/*.rb files or
-  or at custom configuration modules within this gem in rake/config/ directory.
+##### Test it!
 
-### Config module API
-  TODO
+  You should test your tasks, i.e. commands appropriately and make them a part of the 
+  yast module testsuite. Getting the `rake` object is easy:
 
+  ```ruby
+    require 'yast/rake/test'
+
+    attr_reader :rake
+
+    before do
+      @rake = Object.new.extend(Yast::Rake::Test)
+    end
+
+    # we expect the custom code is located at rake/configs and rake/commands dirs
+    describe "Your custom code"
+      rake.config.must_respond_to :package
+      rake.command.package.must_respond_to :install
+    end
+  ```
+
+##### Rake console
+
+  You can see the default configs and commands by running `rake console` which
+  starts an IRB session and loads `rake` object into the main scope. `rake.config` 
+  and `rake.command` return list of registered modules.
+
+  It offers a hook for code which you want to run after the irb session starts, 
+  like importing some yast modules or setup some personal greetings. The default
+  hook (which is a proc) is empty, feel free to override it if needed.
+
+  ```ruby
+    module Yast::Rake::Config
+      module Console
+        def proc
+          Proc.new do
+            ENV["Y2DIR"] = File.expand_path("../../src", __FILE__)
+            require 'yast'
+            ::Yast.import 'Sysconfig'
+          end
+        end
+      end
+
+      register Console
+    end
+  ```
 
 ## Todo
 
   * Add comments for Yard
-  * Add tests (!!) after the design gets approved
+  * Add more tests
   * Add some kind of logging based on rake cli options --verbose and --trace
   * Fix spec file
-  * Add docs on how to organize the config modules and task in a yast repo
   * Add task for building/installing any yast module
   * Identify more useful tasks for obs, git etc.
-  * `rake console` does not load the yast code from the git working dir yet
-  * Loading custom config modules and tasks from specific dir like 
-    yast-git-repo/rake/config and yast-git-repo/rake/tasks
 
 
 ## Contributing

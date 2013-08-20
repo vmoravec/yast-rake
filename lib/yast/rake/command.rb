@@ -5,7 +5,7 @@ module Yast
   module Rake
     module Command
 
-      LOCAL_COMMAND_DIR = File.join('rake', 'command')
+      LOCAL_COMMAND_DIR = File.join('rake', 'commands')
 
       extend Context
 

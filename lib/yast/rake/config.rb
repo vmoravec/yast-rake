@@ -3,12 +3,13 @@ require 'yast/rake/config/yast'
 require 'yast/rake/config/package'
 require 'yast/rake/config/console'
 require 'yast/rake/context'
+require 'pathname'
 
 module Yast
   module Rake
     module Config
 
-      LOCAL_CONFIG_DIR = File.join('rake', 'config')
+      LOCAL_CONFIG_DIR = File.join('rake', 'configs')
 
       extend Context
 
