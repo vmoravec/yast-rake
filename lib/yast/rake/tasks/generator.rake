@@ -27,3 +27,5 @@ namespace :gen do
     end
   end
 end
+
+task :g => :gen

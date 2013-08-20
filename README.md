@@ -24,6 +24,8 @@ you find more details on how to install it from this git repo.
   >  rake check:package  # Check package code completness  
   >  rake check:syntax   # Check syntax of *.{rb,rake} files  
   >  rake console        # Start irb session with yast/rake loaded  
+  >  rake g:spec       # Create 'spec/' directory and 'spec/spec_helper.rb' file
+  >  rake g:test       # Create 'test/' directory and 'test/test_helper.rb' file
   >  rake install        # Install the yast code on the current system  
   >  rake package:info   # Meta information about the yast package  
   >  rake package:init   # Create a new yast package skeleton  
@@ -32,7 +34,7 @@ you find more details on how to install it from this git repo.
 
 ## Features
 
-### Config modules
+### Config
 
   * use for configuration
   * not dependent on Rake
@@ -44,7 +46,7 @@ you find more details on how to install it from this git repo.
     * look at config examples below to get a clearer picture
   * put your custom config modules into `rake/configs` directory to get them loaded
 
-### Command modules
+### Command
 
   * use for rake tasks implementation to better testing and managing
   * not dependent on Rake
@@ -66,126 +68,127 @@ you find more details on how to install it from this git repo.
   * `rake gen:spec` creates spec/ directory and spec/spec_helper.rb file from a template
 
 
-#### Examples
+## Examples
 
-##### Config module
+### Config example
 
   in `rake/configs/package.rb`
 
   ```ruby
-    module Yast::Rake::Config
-      module Package
-        VERSION_FILE_NAME = 'VERSION'
-        RPM_FILE_NAME = 'RPMNAME'
+module Yast::Rake::Config
+  module Package
+    VERSION_FILE_NAME = 'VERSION'
+    RPM_FILE_NAME = 'RPMNAME'
 
-        attr_reader :version
-        attr_reader :name
+    attr_reader :version
+    attr_reader :name
 
-        def setup
-          @version_file = rake.config.root.join(VERSION_FILE_NAME)
-          @rpmname_file = rake.config.root.join(RPM_FILE_NAME)
-          fail "Version file not found" unless File.exists?(@version_file)
-          fail "Rpm-name file not found" unless File.exists?(@rpmname_file)
-          @version = File.read(@version_file).strip
-          @name    = File.read(@rpmname_file).strip
-          errors << "File #{VERSION_FILE_NAME} must not be empty" if @version.size.zero?
-          errors << "File #{RPM_FILE_NAME} must not be empty"     if @version.size.zero?
-        end
-      end
-
-      register Package
-
+    def setup
+      @version_file = rake.config.root.join(VERSION_FILE_NAME)
+      @rpmname_file = rake.config.root.join(RPM_FILE_NAME)
+      fail "Version file not found" unless File.exists?(@version_file)
+      fail "Rpm-name file not found" unless File.exists?(@rpmname_file)
+      @version = File.read(@version_file).strip
+      @name    = File.read(@rpmname_file).strip
+      errors << "File #{VERSION_FILE_NAME} must not be empty" if @version.size.zero?
+      errors << "File #{RPM_FILE_NAME} must not be empty"     if @version.size.zero?
     end
+  end
+
+  register Package
+
+end
   ```
 
   Config modules get loaded automatically from the path `rake/configs/` after the
   default configs has been loaded.  
 
-  Defining your custom config in namespace `Yast::Rake::Config` has the advantages of
-  avoiding namespace collision, in place registering right after the config module
-  definition and keeping Rakefile clean from custom code.
+  Defining your custom config in namespace `Yast::Rake::Config` has the advantages of:  
+    * avoiding namespace collision
+    * in place registering right after the config module definition
+    * keeping Rakefile clean from custom code.
 
 
-##### Command module
+### Command example
 
   in `rake/commands/package.rb`
 
   ```ruby
-    module Yast::Rake::Command
-      module Package
-        include FileUtils # no need to require 'fileutils' as they are already loaded
+module Yast::Rake::Command
+  module Package
+    include FileUtils # no need to require 'fileutils' as they are already loaded
 
-        def install
-          sh "rpm -i #{rake.config.package.name}-#{rake.config.package.version}.rpm'
-          puts "Package has been install successfully"
-        end
-      end
-
-      register Package
-
+    def install
+      sh "rpm -i #{rake.config.package.name}-#{rake.config.package.version}.rpm"
+      puts "Package has been install successfully"
     end
+  end
+
+  register Package
+
+end
   ```
 
-##### Rake task
+### Task example
 
   in `rake/tasks/package.rake`
 
   ```ruby
-    namespace :package do
-      desc "Install the package"
-      task :install do
-        rake.command.package.install
-      end
-    end
+namespace :package do
+  desc "Install the package"
+  task :install do
+    rake.command.package.install
+  end
+end
   ```
 
   Running `rake package:install` will execute the task/command.
 
-##### Test it!
+### Test it!
 
   You should test your tasks, i.e. commands appropriately and make them a part of the 
   yast module testsuite. Getting the `rake` object is easy:
 
   ```ruby
-    require 'yast/rake/test'
+require 'yast/rake/test'
 
-    attr_reader :rake
+attr_reader :rake
 
-    before do
-      @rake = Object.new.extend(Yast::Rake::Test)
-    end
+before do
+  @rake = Object.new.extend(Yast::Rake::Test)
+end
 
-    # we expect the custom code is located at rake/configs and rake/commands dirs
-    describe "Your custom code"
-      rake.config.must_respond_to :package
-      rake.command.package.must_respond_to :install
-    end
+# we expect the custom code is located at rake/configs and rake/commands dirs
+describe "Your custom code"
+  rake.config.must_respond_to :package
+  rake.command.package.must_respond_to :install
+end
   ```
 
-##### Rake console
+### Rake console
 
   You can see the default configs and commands by running `rake console` which
   starts an IRB session and loads `rake` object into the main scope. `rake.config` 
   and `rake.command` return list of registered modules.
 
-  It offers a hook for code which you want to run after the irb session starts, 
-  like importing some yast modules or setup some personal greetings. The default
-  hook (which is a proc) is empty, feel free to override it if needed.
+  It offers a hook for code you want to run after the irb session starts, 
+  like importing some yast modules or setup some personal greetings :). The 
+  hook expects a proc and it's empty by default, feel free to override it if needed.
 
   ```ruby
-    module Yast::Rake::Config
-      module Console
-        def proc
-          Proc.new do
-            ENV["Y2DIR"] = File.expand_path("../../src", __FILE__)
-            require 'yast'
-            ::Yast.import 'Sysconfig'
-          end
-        end
+module Yast::Rake::Config
+  module Console
+    def proc
+      Proc.new do
+        ENV["Y2DIR"] = File.expand_path("../../src", __FILE__)
+        require 'yast'
+        ::Yast.import 'Sysconfig'
       end
-
-      register Console
     end
+  end
+
+  register Console
+end
   ```
 
 ## Todo
